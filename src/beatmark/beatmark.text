@@ -1,0 +1,85 @@
+beatmark v1.1, by Kly_Men_COmpany!
+
+This program is used to define markers in an audio file at exact sample positions based solely on beats. Then each mark will have an associated value number, from 0 to 255, effectively gives 8 bit-flags.
+
+Marks are exported in a simple text file than easily can be read by Game Maker in your game; some functions are provided as a .gml file too.
+
+Basic concept of "beat" is a pair of two real numbers: sample position of first marker, and distance between markers. Because of floating point math, you should not care about samples by themselves: just define a beat by pointing at first interesting moment in audio, and then move child markers (created at equal distances) as you need, trying to make them match the music.
+
+This program allows very easy and accurate distance adjustment: you can move any child marker to change beat parameters. And you can have as many different beats in one audio file as you want: they will be seamlessly joined without overlapping.
+
+Then, when all beats are defined, you should set markers values. Each marker is represented as a combination of 8 colors, and you can toggle any color on and off for any marker.
+
+Obviously, marker colors values = 1, 2, 4, 8, 16, 32, 64 and 128, which are just summed.
+(If you need more than eight flags, you can make an additional beatmark file for the same music, I presume...)
+
+So, OK. To start you should open a .wav audio file. Upper part of the window represents the whole track and shows your position. Bottom part is a zoomed section.
+When you start a new project, the program will be in the beat-mode (rather than mark-mode).
+
+Global controls:
+
+You can change window size, and the program screen will be resized to fit. (But very large window may have bad graphic performance).
+Use mouse wheel to zoom in and out. (Also PageUp and PageDown might work if you have no mouse wheel).
+Press and drag left mouse button to move around the track.
+Single click with left mouse button will play your audio from that position. To stop playing, click the upper part with right mouse button!
+(Also the music will stop automatically after a minute or so. To continue it, click there again).
+
+BEAT mode:
+
+Click and drag right mouse button on the bottom part to create a beat. You will see one bold line and many child lines to the right.
+(Some may disappear, but use zooming to see them).
+
+You can adjust beat start position by dragging in with right mouse button.
+Also you can drag with right mouse button any of child lines to change distance between all of them.
+(To create another beat you should click between other lines - use zoom).
+
+To delete a beat, drag it onto neighbor beat, or move off the window.
+
+Now, when you have some beats, you may start to put colors on marks. Please, double click with right (!) mouse button upper part of the window.
+Bottom part will change background and beats colors. This is the mark-mode.
+
+MARK mode:
+
+Click bottom part with right mouse button: this will toggle a color on the clicked mark. The space between marks is always owned by the left mark only. You will see a color gradient.
+Vertical space is divided by 8 rows, each one is responsible for the one color. From top to bottom: black (1<<0), blue (1<<1), red (1<<2), magenta (1<<3), green (1<<4), cyan (1<<5) yellow (1<<6) and white (1<<7).
+You cannot move, drag or copy those colors, only right-clicking individually.
+
+By double right-clicking upper window part you can always return to beat-mode to adjust markers positions. You will not loose your colors, but they are owned by the markers and not by the timeline.
+
+There is no special meaning of colors, neither you will see that after exporting marks. So you can think about color anything you want. For example, if you need to just mark some important potions, you can use just any color. You can use two colors to simply define some not overlapping portions of music.
+Generally, think about each color as a separate track where you can store some information about the music, like a chorus beginning, drum kicks, or a plain metronome which will mark each 4th lines.
+
+To help you visually feel the exact marked moments, all your colors will flash in the upper window part when the music plays.
+
+Each time you change mode (beat or mark) if a change was made - a new working copy of the project is made. There is no undo system, but old project files (.txt) are not deleted automatically, you can open any of them anytime.
+You can see a path to the current project in game window. Naming scheme ensures that each time you will start a new project chain.
+
+To open a project instead of music file, just select .txt at initial dialog. The first line in that file contain a full path to used audio - sometimes you will have to manually change it to a proper filename.
+When you close the program, it actually restarts and forces you to select another file, or cancel to exit.
+But also when you try to close the window - all changes are saved, and exported .log file is created.
+
+This log file has very simple format for reading: each pair of lines is a sample position of a mark, and the color of that mark.
+All numbers are integers larger than zero. Sample positions are sorted.
+Note that marks without any assigned color are not exported at all.
+
+To actually use that file you have to read it in your game, and then perform some comparisons with samples and bit-and masks, for example to check for a green color you can write "if (col&16)<>0 {...}".
+
+You can import .GML file in your project to use these functions:
+
+beatmark_load(logfile,adjust);
+
+- opens a logfile (exported .log) and reads all marks. Parameter "adjust" is added to each sample value (can be negative too). Returns total number of marks.
+Note that arrays are stored to current object's local variables, so you can load only one beatmark file from the same object.
+
+beatmark_sample(index)
+
+- returns audio sample number value for the mark with this index.
+
+beatmark_color(index)
+
+- returns color value for the mark with this index.
+
+beatmark_near(sample,mask,leftright)
+
+- performs a binary search for a specified sample value, returns the nearest mark index. You can provide a mask if you care only for particular colors (but zero is hardcoded to be 255, don't be fooled by this).
+Assign "leftright" to 1 or -1 to search only to the right or to the left from the specified sample.
